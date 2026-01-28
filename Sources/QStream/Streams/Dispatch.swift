@@ -83,5 +83,3 @@ public extension Stream {
         await Streams.Dispatch(upstream: self, priority: priority, bufferingPolicy: bufferingPolicy)
     }
 }
-
-extension AsyncStream.Continuation.BufferingPolicy: @unchecked Sendable { }

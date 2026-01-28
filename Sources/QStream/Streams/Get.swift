@@ -130,6 +130,7 @@ public extension Stream {
         await Streams.GetCompactMap(upstream: self, transform: { $0 }).get()
     }
     
+    @available(*, deprecated, message: "Use `getValueCancelable()` instead")
     func getValue<T: Sendable>(timeout: DispatchTimeInterval) async throws -> T where V == T? {
         try await self
             .map { $0.map { Result<T, Error>.success($0) } }

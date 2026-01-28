@@ -8,7 +8,7 @@
 import Foundation
 
 // https://forums.swift.org/t/why-is-dispatchtimeinterval-not-comparable/15484
-extension DispatchTimeInterval: Comparable {
+extension DispatchTimeInterval: @retroactive Comparable {
     var totalNanoseconds: Int64 {
         switch self {
         case .nanoseconds(let ns): return Int64(ns)
