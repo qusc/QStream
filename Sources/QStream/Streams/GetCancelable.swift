@@ -95,6 +95,10 @@ extension Stream {
         return try await withTimeout(timeout) { [self] in try await getCancelable { $0 } }
     }
     
+    public func getCancelable() async throws -> V {
+        try await getCancelable { $0 }
+    }
+
     public func getValueCancelable<T: Sendable>() async throws -> T where V == T? {
         try await getCancelable { $0 }
     }
