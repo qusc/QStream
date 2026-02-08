@@ -35,7 +35,7 @@ public actor AsyncBinarySemaphore {
     public func signal() {
         guard value < 1 else { return }
 
-        if withUnsafeCurrentTask(body: { allowTaskReentrancy && $0 == owningTask }) { // TODO: solve dirty fix
+        if withUnsafeCurrentTask(body: { allowTaskReentrancy && $0 == owningTask }) {
             value += 1
         } else {
             value = 1
@@ -43,7 +43,7 @@ public actor AsyncBinarySemaphore {
         
         /// Resume
         if value > 0 {
-            if allowTaskReentrancy { // TODO: solve dirty fix
+            if allowTaskReentrancy {
                 owningTask = nil
             }
             
@@ -67,14 +67,14 @@ public actor AsyncBinarySemaphore {
                 waitingContinuations.updateValue(.nonThrowing(continuation), forKey: .init(), insertingAt: 0)
             }
             
-            if allowTaskReentrancy { // TODO: solve dirty fix
+            if allowTaskReentrancy {
                 withUnsafeCurrentTask { currentTask in
                     owningTask = currentTask
                 }
             }
         }
     }
-    
+
     public func waitCancelable() async throws {
         guard !Task.isCancelled else { throw CancellationError() } /// Fail early if task is already cancelled, just an optimization.
         
@@ -108,14 +108,14 @@ public actor AsyncBinarySemaphore {
                 Task { await cancelContinuation(id: continuationID) }
             }
             
-            if allowTaskReentrancy { // TODO: solve dirty fix
+            if allowTaskReentrancy {
                 withUnsafeCurrentTask { currentTask in
                     owningTask = currentTask
                 }
             }
         }
     }
-    
+
     private func cancelContinuation(id: UUID) {
         guard let continuation = waitingContinuations.removeValue(forKey: id) else { return }
         continuation.cancel()
@@ -136,16 +136,10 @@ public actor AsyncBinarySemaphore {
     }
     
     private func takeValue() {
-        if allowTaskReentrancy { // TODO: solve dirty fix
+        if allowTaskReentrancy {
             withUnsafeCurrentTask { currentTask in
                 value -= 1
                 owningTask = currentTask
-                
-                //            #if DEBUG
-                //            if debugDeadlockDetection {
-                //                print("deadlock detection: setting current task to \(currentTask)")
-                //            }
-                //            #endif
             }
         } else {
             value -= 1
