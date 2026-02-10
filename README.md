@@ -254,6 +254,64 @@ await activeSource
     .store(in: &subscriptions)
 ```
 
+## Interoperability
+
+### Combine
+
+On Apple platforms, any Combine `Publisher` can be converted into a QStream `Stream` via `.stream()`:
+
+```swift
+import Combine
+
+let subject = CurrentValueSubject<String, Never>("hello")
+
+let stream = await subject.stream()
+await stream.currentValue()  // "hello"
+
+await stream
+    .map { $0.uppercased() }
+    .tap { print($0) }
+    .store(in: &subscriptions)
+
+subject.send("world")  // prints "WORLD"
+```
+
+If the upstream publisher synchronously emits a value on subscription (like `CurrentValueSubject`), the resulting stream preserves current-value semantics — `currentValue()` is available immediately. For publishers that don't emit synchronously (like `PassthroughSubject`), the stream starts with no current value.
+
+### AsyncSequence
+
+Any `AsyncSequence` can be wrapped into a QStream `Stream` via `AsyncSequenceStream`:
+
+```swift
+let (stream, continuation) = AsyncStream.makeStream(of: Int.self)
+let qstream = await AsyncSequenceStream(stream)
+
+await qstream
+    .map { $0 * 2 }
+    .tap { print($0) }
+    .store(in: &subscriptions)
+
+continuation.yield(5)  // prints 10
+```
+
+The resulting stream starts with no current value and emits values as the upstream sequence produces them.
+
+Conversely, any QStream `Stream` can be bridged back to an `AsyncThrowingStream`:
+
+```swift
+// Future values only (like .subscribe)
+let asyncStream = await myStream.asyncStream()
+
+for try await value in asyncStream {
+    print(value)
+}
+
+// Current value + future values (like .tap)
+let asyncStream = await myStream.tapAsyncStream()
+```
+
+Both return `AsyncThrowingStream<V, Error>`. The subscription is cleaned up automatically when the async stream is terminated.
+
 ## Async Utilities
 
 QStream also ships with general-purpose async helpers:
