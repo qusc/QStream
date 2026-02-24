@@ -24,7 +24,15 @@ public actor AsyncPipe<Value: Sendable> {
     private var produceSignal: AsyncBinarySemaphore = .init(value: false)
     private let consumeSignal: AsyncBinarySemaphore = .init(value: false)
 
+    /// Holds the upstream subscription that feeds this pipe, keeping it alive
+    /// as long as the pipe exists.
+    private var upstreamSubscription: (any AnySubscription)?
+
     public init(logger: Logger? = .none) { self.logger = logger?.sub() }
+
+    func setUpstreamSubscription(_ subscription: any AnySubscription) {
+        self.upstreamSubscription = subscription
+    }
 
     public func push(_ value: SequenceValue) async {
         try? await pushLock.withLockSendableCancelable {
